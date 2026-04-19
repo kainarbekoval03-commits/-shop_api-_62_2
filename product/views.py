@@ -1,37 +1,50 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status
 from .models import Category, Product, Review
 from .serializers import CategorySerializer, ReviewSerializer, ProductReviewSerializer
 from django.shortcuts import get_object_or_404
 from django.db.models import Count
 import random
-from .serializers import RegisterSerializer
 from django.contrib.auth.models import User
 from .models import UserConfirm
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
+from rest_framework.views import APIView
 
-@api_view(['PUT', 'DELETE'])
-def category_detail(request, id):
-    category = get_object_or_404(Category, id=id)
+class CategoryDetailView(APIView):
 
-    if request.method == 'PUT':
+    def get(self, request, id):
+        category = get_object_or_404(Category, id=id)
+        serializer = CategorySerializer(category)
+        return Response(serializer.data)
+
+    def put(self, request, id):
+        category = get_object_or_404(Category, id=id)
         serializer = CategorySerializer(category, data=request.data)
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors)
 
-    elif request.method == 'DELETE':
+    def delete(self, request, id):
+        category = get_object_or_404(Category, id=id)
         category.delete()
         return Response(status=204)
 
-@api_view(['GET'])
-def category_list(request):
-    categories = Category.objects.annotate(products_count=Count('products'))
-    serializer = CategorySerializer(categories, many=True)
-    return Response(serializer.data)
+class CategoryListView(APIView):
+
+    def get(self, request):
+        categories = Category.objects.all()
+        serializer = CategorySerializer(categories, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = CategorySerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
 
 @api_view(['POST'])
 def category_create(request):
@@ -41,32 +54,47 @@ def category_create(request):
         return Response(serializer.data, status=201)
     return Response(serializer.errors, status=400)
 
-@api_view(['GET', 'POST'])
-def product_list(request):
-    if request.method == 'GET':
-        products = Product.objects.all()
+class ProductListView(APIView):
+
+    def get(self, request):
+        category_id = request.GET.get('category')
+
+        if category_id:
+            products = Product.objects.filter(category_id=category_id)
+        else:
+            products = Product.objects.all()
+
         serializer = ProductReviewSerializer(products, many=True)
         return Response(serializer.data)
 
-    elif request.method == 'POST':
+    def post(self, request):
         serializer = ProductReviewSerializer(data=request.data)
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=201)
+
         return Response(serializer.errors)
 
-@api_view(['PUT', 'DELETE'])
-def product_detail(request, id):
-    product = get_object_or_404(Product, id=id)
+class ProductDetailView(APIView):
 
-    if request.method == 'PUT':
+    def get(self, request, id):
+        product = get_object_or_404(Product, id=id)
+        serializer = ProductReviewSerializer(product)
+        return Response(serializer.data)
+
+    def put(self, request, id):
+        product = get_object_or_404(Product, id=id)
         serializer = ProductReviewSerializer(product, data=request.data)
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
+
         return Response(serializer.errors)
 
-    elif request.method == 'DELETE':
+    def delete(self, request, id):
+        product = get_object_or_404(Product, id=id)
         product.delete()
         return Response(status=204)
 
@@ -92,31 +120,48 @@ def review_create(request):
         return Response(serializer.data, status=201)
     return Response(serializer.errors)
 
-@api_view(['GET'])
-def review_list(request):
-    reviews = Review.objects.all()
-    serializer = ReviewSerializer(reviews, many=True)
-    return Response(serializer.data)
+class ReviewListView(APIView):
+
+    def get(self, request):
+        reviews = Review.objects.all()
+        serializer = ReviewSerializer(reviews, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = ReviewSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+
+        return Response(serializer.errors)
 
 
-@api_view(['POST', 'DELETE'])
-def review_detail(request, id):
-    review = get_object_or_404(Review, id=id)
+class ReviewDetailView(APIView):
 
-    if request.method == 'POST':
+    def get(self, request, id):
+        review = get_object_or_404(Review, id=id)
+        serializer = ReviewSerializer(review)
+        return Response(serializer.data)
+
+    def put(self, request, id):
+        review = get_object_or_404(Review, id=id)
         serializer = ReviewSerializer(review, data=request.data)
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
+
         return Response(serializer.errors)
 
-    elif request.method == 'DELETE':
+    def delete(self, request, id):
+        review = get_object_or_404(Review, id=id)
         review.delete()
         return Response(status=204)
     
 @api_view(['POST'])
 def register(request):
-    serializer = RegisterSerializer(data=request.data)
+    serializer = ReviewSerializer(data=request.data)
 
     if serializer.is_valid():
         user = serializer.save()

@@ -20,18 +20,18 @@ from product.views import *
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/v1/categories/', category_list),
-    path('api/v1/categories/<int:id>/', category_detail),
+    path('api/v1/categories/', CategoryListView.as_view()),
+    path('api/v1/categories/<int:id>/', CategoryDetailView.as_view()),
     path('api/v1/categories/create/', category_create),
 
-    path('api/v1/products/', product_list),
-    path('api/v1/products/<int:id>/', product_detail),
+    path('api/v1/products/', ProductListView.as_view()),
+    path('api/v1/products/<int:id>/', ProductDetailView.as_view()),
     path('api/v1/products/reviews/', products_with_reviews),
     path('api/v1/poducts/create/', product_create),
 
 
-    path('api/v1/reviews/', review_list),
-    path('api/v1/reviews/<int:id>/', review_detail),
+    path('api/v1/reviews/', ReviewListView.as_view()),
+    path('api/v1/reviews/<int:id>/', ReviewDetailView.as_view()),
     path('api/v1/reviews/create/', review_create),
     
 
@@ -42,4 +42,3 @@ urlpatterns = [
 ]
 
 
-  
