@@ -39,9 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'product',
     'rest_framework.authtoken',
-    
+    'users',
+    'product',
 ]
 
 MIDDLEWARE = [
@@ -123,3 +123,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+AUTH_USER_MODEL = 'users.CustomUser'
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')

@@ -1,11 +1,6 @@
-
-
 from rest_framework import serializers
 from .models import Category, Product, Review
 from django.db.models import Avg
-from django.contrib.auth.models import User
-
-
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -14,7 +9,6 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'name', 'products_count']
-
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -32,27 +26,5 @@ class ProductReviewSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'price', 'reviews', 'rating']
 
     def get_rating(self, obj):
-        avg = object.reviews.aggregate(avg=Avg('stars'))['avg']
+        avg = obj.reviews.aggregate(avg=Avg('stars'))['avg']
         return round(avg, 1) if avg else 0
-    
-
-
-class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
-
-    class Meta:
-        model = User
-        fields = ['username', 'password', 'email']
-
-    def create(self, validated_data):
-        user = User.objects.create_user(
-            username=validated_data['username'],
-            password=validated_data['password'],
-            email=validated_data.get('email')
-        )
-        user.is_active = False
-        user.save()
-
-        return user
-
-

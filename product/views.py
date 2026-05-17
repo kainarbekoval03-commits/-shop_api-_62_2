@@ -4,12 +4,8 @@ from .models import Category, Product, Review
 from .serializers import CategorySerializer, ReviewSerializer, ProductReviewSerializer
 from django.shortcuts import get_object_or_404
 from django.db.models import Count
-import random
-from django.contrib.auth.models import User
-from .models import UserConfirm
-from django.contrib.auth import authenticate
-from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
+
 
 class CategoryDetailView(APIView):
 
@@ -32,10 +28,11 @@ class CategoryDetailView(APIView):
         category.delete()
         return Response(status=204)
 
+
 class CategoryListView(APIView):
 
     def get(self, request):
-        categories = Category.objects.all()
+        categories = Category.objects.annotate(products_count=Count('products'))
         serializer = CategorySerializer(categories, many=True)
         return Response(serializer.data)
 
@@ -46,6 +43,7 @@ class CategoryListView(APIView):
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
 
+
 @api_view(['POST'])
 def category_create(request):
     serializer = CategorySerializer(data=request.data)
@@ -53,6 +51,7 @@ def category_create(request):
         serializer.save()
         return Response(serializer.data, status=201)
     return Response(serializer.errors, status=400)
+
 
 class ProductListView(APIView):
 
@@ -76,6 +75,7 @@ class ProductListView(APIView):
 
         return Response(serializer.errors)
 
+
 class ProductDetailView(APIView):
 
     def get(self, request, id):
@@ -98,11 +98,13 @@ class ProductDetailView(APIView):
         product.delete()
         return Response(status=204)
 
+
 @api_view(['GET'])
 def products_with_reviews(request):
     products = Product.objects.all()
     serializer = ProductReviewSerializer(products, many=True)
     return Response(serializer.data)
+
 
 @api_view(['POST'])
 def product_create(request):
@@ -112,6 +114,7 @@ def product_create(request):
         return Response(serializer.data, status=201)
     return Response(serializer.errors)
 
+
 @api_view(['POST'])
 def review_create(request):
     serializer = ReviewSerializer(data=request.data)
@@ -119,6 +122,7 @@ def review_create(request):
         serializer.save()
         return Response(serializer.data, status=201)
     return Response(serializer.errors)
+
 
 class ReviewListView(APIView):
 
@@ -158,68 +162,3 @@ class ReviewDetailView(APIView):
         review = get_object_or_404(Review, id=id)
         review.delete()
         return Response(status=204)
-    
-@api_view(['POST'])
-def register(request):
-    serializer = ReviewSerializer(data=request.data)
-
-    if serializer.is_valid():
-        user = serializer.save()
-
-        code = str(random.randint(100000, 999999))
-
-        UserConfirm.objects.create(
-            user=user,
-            code=code
-        )
-
-    
-        return Response({
-            "message": "User created. Confirm your account",
-            "code": code   
-        })
-
-    return Response(serializer.errors, status=400)
-
-@api_view(['POST'])
-def confirm_user(request):
-    username = request.data.get('username')
-    code = request.data.get('code')
-
-    try:
-        user = User.objects.get(username=username)
-        confirm = UserConfirm.objects.get(user=user)
-
-        if confirm.code != code:
-            return Response({"error": "Wrong code"}, status=400)
-
-        user.is_active = True
-        user.save()
-
-        confirm.is_confirmed = True
-        confirm.save()
-
-        return Response({"message": "User confirmed"})
-
-    except User.DoesNotExist:
-        return Response({"error": "User not found"}, status=404)
-
-
-@api_view(['POST'])
-def login(request):
-    username = request.data.get('username')
-    password = request.data.get('password')
-
-    user = authenticate(username=username, password=password)
-
-    if user is None:
-        return Response({"error": "Invalid credentials"}, status=400)
-
-    if not user.is_active:
-        return Response({"error": "User not confirmed"}, status=403)
-
-    token, created = Token.objects.get_or_create(user=user)
-
-    return Response({
-        "token": token.key
-    })
