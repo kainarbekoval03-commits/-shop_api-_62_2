@@ -7,6 +7,7 @@ from rest_framework.authtoken.models import Token
 from .models import CustomUser
 from .serializers import RegisterSerializer, LoginSerializer, ConfirmSerializer
 from .redis_client import save_confirmation_code, get_confirmation_code, delete_confirmation_code
+from .tasks import send_confirmation_email
 
 
 @api_view(['POST'])
@@ -18,10 +19,10 @@ def register(request):
         code = str(random.randint(100000, 999999))
         save_confirmation_code(user.email, code)
 
-        return Response({
-            "message": "User created. Confirm your account.",
-            "code": code
-        })
+        # отправляем email асинхронно через Celery
+        send_confirmation_email.delay(user.email, code)
+
+        return Response({"message": "User created. Confirm your account."})
 
     return Response(serializer.errors, status=400)
 

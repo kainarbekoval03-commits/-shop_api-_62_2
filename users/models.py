@@ -7,6 +7,10 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=150, blank=True)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
+    birthdate = models.DateField(blank=True, null=True)
+    registration_source = models.CharField(max_length=20, default='web')
     is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
 
